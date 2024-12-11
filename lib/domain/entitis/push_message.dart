@@ -11,22 +11,19 @@ class PushMessage {
       required this.title,
       required this.body,
       required this.sentDate,
-      required this.data,
-      required this.imageUrl});
+      this.data,
+      this.imageUrl});
 
   @override
   String toString() {
     return '''
-PushMessage =
+PushMessage - 
   id:    $messageId
   title: $title
   body:  $body
-  date:  $data
+  data:  $data
   imageUrl: $imageUrl
   sentDate: $sentDate
-  
-
-
- ''';
+''';
   }
 }

@@ -24,16 +24,15 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   NotificationsBloc() : super(const NotificationsState()) {
     on<NotificationStatusChanged>(_notificationStatusChanged);
-    on<NotificationReceived>(onPushMessageReceived);
+    on<NotificationReceived>(_onPushMessageReceived);
 
-    // verificar el estado de las notificaciones
+    // Verificar estado de las notificaciones
     _initialStatusCheck();
 
-    // Listener para notificaciones en foreground
+    // Listener para notificaciones en Foreground
     _onForegroundMessage();
   }
 
-  //FCM = Firebase  cloud Messaging
   static Future<void> initializeFCM() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -46,7 +45,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     _getFCMToken();
   }
 
-  void onPushMessageReceived(
+  void _onPushMessageReceived(
       NotificationReceived event, Emitter<NotificationsState> emit) {
     emit(state
         .copyWith(notifications: [event.pushMessage, ...state.notifications]));
@@ -55,7 +54,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   void _initialStatusCheck() async {
     final settings = await messaging.getNotificationSettings();
     add(NotificationStatusChanged(settings.authorizationStatus));
-    _getFCMToken();
   }
 
   void _getFCMToken() async {
@@ -65,8 +63,8 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     print(token);
   }
 
-  void _handleRemoteMessage(RemoteMessage message) {
-    if (message.notification != null) return;
+  void handleRemoteMessage(RemoteMessage message) {
+    if (message.notification == null) return;
 
     final notification = PushMessage(
         messageId:
@@ -83,7 +81,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   }
 
   void _onForegroundMessage() {
-    FirebaseMessaging.onMessage.listen(_handleRemoteMessage);
+    FirebaseMessaging.onMessage.listen(handleRemoteMessage);
   }
 
   void requestPermission() async {
@@ -98,5 +96,14 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     );
 
     add(NotificationStatusChanged(settings.authorizationStatus));
+  }
+
+  PushMessage? getMessageById(String pushMessageId) {
+    final exist = state.notifications
+        .any((element) => element.messageId == pushMessageId);
+    if (!exist) return null;
+
+    return state.notifications
+        .firstWhere((element) => element.messageId == pushMessageId);
   }
 }
